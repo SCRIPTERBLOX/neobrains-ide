@@ -10,16 +10,11 @@ vim.g.loaded_netrwPlugin = 1
 -- optionally enable 24-bit colour
 --vim.opt.termguicolors = true
 
--- empty setup using defaults
-require("nvim-tree").setup()
-
--- OR setup with some options
---[[require("nvim-tree").setup({
-  sort = {
-    sorter = "case_sensitive",
-  },
+-- Setup nvim-tree with custom configuration
+require("nvim-tree").setup({
   view = {
     width = 30,
+    side = "left",
   },
   renderer = {
     group_empty = true,
@@ -27,13 +22,13 @@ require("nvim-tree").setup()
   filters = {
     dotfiles = true,
   },
- })--]]
+})
 
--- Open nvim-tree and create centered text
-vim.cmd(":NvimTreeOpen")
-
--- Create centered text in main buffer
+-- Create greeting in main buffer (uncloseable)
 vim.defer_fn(function()
+	-- Open nvim-tree first
+	vim.cmd("NvimTreeOpen")
+	
 	-- Focus the main window (not nvim-tree)
 	vim.cmd("wincmd l")
 	
@@ -70,9 +65,30 @@ vim.defer_fn(function()
 	-- Set buffer content
 	vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
 	
-	-- Set buffer options
+	-- Set buffer options to make it uncloseable but excluded from bufferline
 	vim.api.nvim_buf_set_option(buf, "modifiable", true)
-	vim.api.nvim_buf_set_option(buf, "filetype", "text")
+	vim.api.nvim_buf_set_option(buf, "filetype", "neobrains-greeting")
+	vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
+	vim.api.nvim_buf_set_name(buf, "Welcome")
+	
+	-- Make it uncloseable by overriding :q command for this buffer
+	vim.api.nvim_create_autocmd({"BufWinLeave", "BufDelete"}, {
+		buffer = buf,
+		callback = function()
+			-- Prevent closing this buffer
+			vim.defer_fn(function()
+				-- Recreate the buffer if it gets deleted
+				if not vim.api.nvim_buf_is_valid(buf) then
+					local new_buf = vim.api.nvim_create_buf(false, true)
+					vim.api.nvim_buf_set_option(new_buf, "filetype", "neobrains-greeting")
+					vim.api.nvim_buf_set_option(new_buf, "buftype", "nofile")
+					vim.api.nvim_buf_set_name(new_buf, "Welcome")
+					vim.api.nvim_buf_set_lines(new_buf, 0, -1, false, lines)
+					vim.api.nvim_win_set_buf(0, new_buf)
+				end
+			end, 10)
+		end
+	})
 	
 	-- Focus back to nvim-tree
 	vim.cmd("wincmd h")

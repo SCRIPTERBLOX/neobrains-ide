@@ -11,5 +11,10 @@ return {
 	["Autocomplete: Scroll docs up"] = "<C-d>",
 	["Autocomplete: Scroll docs down"] = "<C-f>",
 	["Autocomplete: next item or expand snippet"] = "<Tab>",
-	["Autocomplete: previous item or jump in snippet"] = "<S-Tab>"
+	["Autocomplete: previous item or jump in snippet"] = "<S-Tab>",
+
+	-- Buffer navigation keybinds
+	["Buffer: Next buffer"] = "<Tab>",
+	["Buffer: Previous buffer"] = "<S-Tab>",
+	["Buffer: Pick buffer"] = "<leader>bp"
 }
