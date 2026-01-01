@@ -25,6 +25,7 @@ yay -S neovim-web-devicons-git
 ### Install a nerd font
 
 Go to https://nerdfonts.com/font-downloads, choose the font you like and install it.
+*You will also need to configure your terminal emulator to use the nerd font*
 
 ### Clone the config
 
