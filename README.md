@@ -9,10 +9,19 @@ A neovim config attempting to be as close to a Jetbrains IDE as makes sense.. or
 #### Arch
 
 ```bash
+sudo pacman -S nvim
 yay -S neovim-web-devicons-git
 ```
 
 *I am sure at this moment there are more dependancies but because I am to lazy to figure out how to find that out you will need to tell me (open an issue).*
+
+#### Ubuntu
+
+```bash
+sudo add-apt-repository ppa:neovim-ppa/stable -y
+sudo apt update
+sudo apt install neovim
+```
 
 #### Debian
 
@@ -25,6 +34,7 @@ yay -S neovim-web-devicons-git
 ### Install a nerd font
 
 Go to https://nerdfonts.com/font-downloads, choose the font you like and install it.
+
 *You will also need to configure your terminal emulator to use the nerd font*
 
 ### Clone the config
@@ -56,3 +66,11 @@ In the plugins directory each file is either for installing one plugin and confi
 In the config directory its mainly just as you would guess configuring installed plugins some more.
 
 ***You probably should not be modifying `~/.config/nvim/lua/config/lazy.lua` unless you are exactly sure how because it is responsible for making sure all of the plugins holding the editor together are installed and used.***
+
+## Credits
+
+Thanks to [NvChad](https://nvchad.com) for their lsp and autocomplete setup
+This project amongst many other amazing plugins uses
+ + [nvim-tree.lua](https://github.com/nvim-tree/nvim-tree.lua)
+ + [bufferline.nvim](https://github.com/akinsho/bufferline.nvim)
+ + [mason.nvim](https://github.com/mason-org/mason.nvim) for the incredible lsp managing
