@@ -21,81 +21,71 @@ local function smart_close_buffer(buf_num)
     return
   end
   
-  -- Get current window (should be editing window)
+  -- Get current window info
   local current_win = vim.api.nvim_get_current_win()
+  local win_config = vim.api.nvim_win_get_config(current_win)
   
-  -- Find next available buffer using actual bufferline state
+  -- Check if this is a floating window (like Lazy UI)
+  local is_floating = win_config.relative ~= ""
+  
+  if is_floating then
+    -- For floating windows, just close them without buffer switching
+    vim.cmd('close')
+    return
+  end
+  
+  -- For regular windows, find next available buffer
   local next_buf = nil
-  local greeting_buf = nil
+  local buffers = vim.fn.getbufinfo({buflisted = 1})
   
-  -- Method 1: Try to get buffers from actual bufferline tabs
-  local success, result = pcall(function()
-    -- Get bufferline tabs by checking which buffers are actually shown
-    local bufferline_buffers = {}
-    local tabs = vim.fn.getbufinfo({buflisted = 1})
-    
-    for _, bufinfo in ipairs(tabs) do
-      local buf = bufinfo.bufnr
-      if vim.api.nvim_buf_is_valid(buf) and buf ~= buf_num then
-        local buf_ft = vim.api.nvim_buf_get_option(buf, 'filetype')
-        
-        if buf_ft == 'neobrains-greeting' then
-          greeting_buf = buf
-        elseif buf_ft ~= 'NvimTree' and buf_ft ~= 'terminal' and buf_ft ~= 'quickfix' then
-          -- Only include if it would actually be visible in bufferline
-          local filename = vim.api.nvim_buf_get_name(buf)
-          local is_listed = vim.api.nvim_buf_get_option(buf, 'buflisted')
-          
-          if is_listed then
-            if filename ~= "" or vim.api.nvim_buf_line_count(buf) > 1 then
-              table.insert(bufferline_buffers, buf)
-            end
-          end
-        end
+  for _, bufinfo in ipairs(buffers) do
+    local buf = bufinfo.bufnr
+    if buf ~= buf_num and vim.api.nvim_buf_is_valid(buf) then
+      local buf_ft = vim.api.nvim_buf_get_option(buf, 'filetype')
+      local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+      
+      -- Exclude special buffers but include everything else
+      if buf_ft ~= 'NvimTree' and buf_ft ~= 'neobrains-greeting' 
+        and buf_ft ~= 'terminal' and buftype ~= 'quickfix' then
+        next_buf = buf
+        break
       end
-    end
-    
-    return bufferline_buffers
-  end)
-  
-  if success and #result > 0 then
-    next_buf = result[1]
-  else
-    -- Fallback: Only use buffers that are currently loaded with content
-    local buffers = vim.api.nvim_list_bufs()
-    local loaded_buffers = {}
-    
-    for _, buf in ipairs(buffers) do
-      if vim.api.nvim_buf_is_valid(buf) and buf ~= buf_num then
-        local buf_ft = vim.api.nvim_buf_get_option(buf, 'filetype')
-        local is_loaded = vim.api.nvim_buf_is_loaded(buf)
-        
-        if buf_ft == 'neobrains-greeting' and is_loaded then
-          greeting_buf = buf
-        elseif buf_ft ~= 'NvimTree' and buf_ft ~= 'terminal' and buf_ft ~= 'quickfix' and is_loaded then
-          local filename = vim.api.nvim_buf_get_name(buf)
-          local is_listed = vim.api.nvim_buf_get_option(buf, 'buflisted')
-          
-          if is_listed and (filename ~= "" or vim.api.nvim_buf_line_count(buf) > 1) then
-            table.insert(loaded_buffers, buf)
-          end
-        end
-      end
-    end
-    
-    if #loaded_buffers > 0 then
-      next_buf = loaded_buffers[1]
     end
   end
   
-  -- CRITICAL: Switch to next buffer using vim command BEFORE closing
+  -- Count normal buffers (excluding special ones)
+  local normal_buffer_count = 0
+  for _, bufinfo in ipairs(buffers) do
+    local buf = bufinfo.bufnr
+    if buf ~= buf_num and vim.api.nvim_buf_is_valid(buf) then
+      local buf_ft = vim.api.nvim_buf_get_option(buf, 'filetype')
+      local buftype = vim.api.nvim_buf_get_option(buf, 'buftype')
+      
+      if buf_ft ~= 'NvimTree' and buf_ft ~= 'neobrains-greeting' 
+        and buf_ft ~= 'terminal' and buftype ~= 'quickfix' then
+        normal_buffer_count = normal_buffer_count + 1
+      end
+    end
+  end
+  
+  -- Switch to next buffer in the current window
   if next_buf then
-    vim.cmd('buffer ' .. next_buf)
-  elseif greeting_buf then
-    vim.cmd('buffer ' .. greeting_buf)
+    vim.api.nvim_win_set_buf(current_win, next_buf)
+  elseif normal_buffer_count == 0 then
+    -- No other normal buffers, find and show greeting buffer
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+      if vim.api.nvim_buf_is_valid(buf) and buf ~= buf_num then
+        local buf_ft = vim.api.nvim_buf_get_option(buf, 'filetype')
+        if buf_ft == 'neobrains-greeting' then
+          vim.api.nvim_win_set_buf(current_win, buf)
+          break
+        end
+      end
+    end
   else
-    -- Create new buffer
-    vim.cmd('enew')
+    -- Create new buffer in current window
+    local new_buf = vim.api.nvim_create_buf(true, false)
+    vim.api.nvim_win_set_buf(current_win, new_buf)
   end
   
   -- Now close the original buffer

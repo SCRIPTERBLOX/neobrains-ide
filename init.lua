@@ -71,14 +71,28 @@ vim.defer_fn(function()
 	vim.api.nvim_buf_set_option(buf, "buftype", "nofile")
 	vim.api.nvim_buf_set_name(buf, "Welcome")
 	
-	-- Make it uncloseable by overriding :q command for this buffer
-	vim.api.nvim_create_autocmd({"BufWinLeave", "BufDelete"}, {
+	-- Make it uncloseable but only when it's the current buffer
+	vim.api.nvim_create_autocmd({"BufDelete"}, {
 		buffer = buf,
 		callback = function()
-			-- Prevent closing this buffer
+			-- Only recreate if this was the only buffer being deleted
+			-- and there are no other valid buffers to switch to
 			vim.defer_fn(function()
-				-- Recreate the buffer if it gets deleted
-				if not vim.api.nvim_buf_is_valid(buf) then
+				local valid_buffers = {}
+				for _, b in ipairs(vim.api.nvim_list_bufs()) do
+					if vim.api.nvim_buf_is_valid(b) and b ~= buf then
+						local buftype = vim.api.nvim_buf_get_option(b, 'buftype')
+						local filename = vim.api.nvim_buf_get_name(b)
+						-- Only count buffers that would show in bufferline
+						if buftype ~= 'nofile' and buftype ~= 'terminal' and buftype ~= 'quickfix' 
+							and not filename:match("NvimTree") then
+							table.insert(valid_buffers, b)
+						end
+					end
+				end
+				
+				-- Only recreate greeting if there are no other valid buffers
+				if #valid_buffers == 0 and not vim.api.nvim_buf_is_valid(buf) then
 					local new_buf = vim.api.nvim_create_buf(false, true)
 					vim.api.nvim_buf_set_option(new_buf, "filetype", "neobrains-greeting")
 					vim.api.nvim_buf_set_option(new_buf, "buftype", "nofile")
