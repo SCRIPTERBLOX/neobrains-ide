@@ -73,14 +73,10 @@ local function smart_close_buffer(buf_num)
     vim.api.nvim_win_set_buf(current_win, next_buf)
   elseif normal_buffer_count == 0 then
     -- No other normal buffers, find and show greeting buffer
-    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_valid(buf) and buf ~= buf_num then
-        local buf_ft = vim.api.nvim_buf_get_option(buf, 'filetype')
-        if buf_ft == 'neobrains-greeting' then
-          vim.api.nvim_win_set_buf(current_win, buf)
-          break
-        end
-      end
+    local greeting = require("neobrains-greeting")
+    local greeting_buf = greeting.find_buffer()
+    if greeting_buf then
+      vim.api.nvim_win_set_buf(current_win, greeting_buf)
     end
   else
     -- Create new buffer in current window
