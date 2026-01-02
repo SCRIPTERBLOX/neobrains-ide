@@ -9,7 +9,7 @@ A neovim config attempting to be as close to a Jetbrains IDE as makes sense.. or
 #### Arch
 
 ```bash
-sudo pacman -S nvim
+sudo pacman -S nvim git
 yay -S neovim-web-devicons-git
 ```
 
@@ -20,7 +20,7 @@ yay -S neovim-web-devicons-git
 ```bash
 sudo add-apt-repository ppa:neovim-ppa/stable -y
 sudo apt update
-sudo apt install neovim
+sudo apt install neovim git
 ```
 
 #### Debian
