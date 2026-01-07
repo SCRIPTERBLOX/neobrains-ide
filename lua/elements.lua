@@ -6,8 +6,17 @@ elements.Spacer = {
     -- Do nothing
   end
 }
-elements.Button = {
-  txt = "-"
+elements.Files = {
+  txt = "󰉋",
+  action = function()
+  	print(123)
+  end
+}
+elements.Git = {
+  txt = "󰊢",
+  action = function()
+  	print(456)
+  end
 }
 
 return elements
